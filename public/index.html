@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piano Tutor Extrame Edition V3</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- VexFlow (locale) -->
+    <script src="publiclibs/vexflow.js"></script> <!-- Assumendo sia in public/publiclibs/ -->
+</head>
+<body>
+    <header class="app-header">
+        <h1>Piano Tutor Extrame V2</h1>
+        <span class="floating-note note-1">♫</span>
+        <span class="floating-note note-2">♪</span>
+        <span class="floating-note note-3">♩</span>
+        <span class="floating-note note-5">♬</span>
+        <span class="floating-note note-6">♭</span>
+        <span class="floating-note note-7">♯</span>
+        <span class="floating-note note-8">♮</span>
+        <span class="floating-note note-9">𝄞</span>
+    </header>
+
+    <div class="controls">
+        <label for="category-select">Categoria:</label>
+        <select id="category-select">
+            <option value="">-- Seleziona Categoria --</option>
+        </select>
+
+        <label for="exercise-select">Esercizio:</label>
+        <select id="exercise-select" disabled>
+            <option value="">-- Seleziona Esercizio --</option>
+        </select>
+
+        <div class="scroll-speed-control">
+            <label for="scroll-speed">Velocità Scroll:</label>
+            <input type="range" id="scroll-speed" min="1" max="10" value="1">
+            <span id="scroll-speed-value">1</span>
+        </div>
+    </div>
+
+    <div class="metronome-controls controls">
+        <label for="bpm-input">BPM:</label>
+        <input type="number" id="bpm-input" value="100" min="30" max="240" step="1">
+        <button id="metronome-toggle-button">Avvia Metronomo</button>
+        <div id="metronome-visual-indicator" class="metronome-indicator-off"></div>
+        <label for="metronome-auto-start" style="margin-left: 15px; font-size: 0.9em;">
+            <input type="checkbox" id="metronome-auto-start"> Avvia con esercizio
+        </label>
+    </div>
+
+    <div class="status-area">
+        <div class="status-column">
+            <h4>Stato Esercizio</h4>
+            <p>MIDI: <span id="midi-status">Inizializzazione...</span></p>
+            <p>Atteso: <span id="expected-note">--</span></p>
+            <p>Suonato: <span id="played-note">--</span></p>
+            <p>Progresso: <span id="success-rate">-- %</span></p>
+        </div>
+        <div class="status-column exercise-stats-container">
+            <h4>Statistiche Esercizio</h4>
+            <p>Tempo Totale Attivo: <span id="summary-total-time">--</span></p>
+            <p>Errori Totali: <span id="summary-total-errors">--</span></p>
+            <p>Tempo Medio Ripetizione: <span id="summary-avg-rep-time">--</span></p>
+        </div>
+        <div class="status-column errors-detail-container">
+            <h4>Dettaglio Errori</h4>
+            <div id="summary-errors-list" class="errors-list">
+                <p>Nessun esercizio completato.</p>
+            </div>
+        </div>
+        <!-- NUOVO: Contenitore per Feedback AI -->
+        <div class="status-column ai-feedback-container">
+            <h4>Feedback dall'Esperto AI</h4>
+            <div id="ai-feedback-content" class="ai-feedback-list">
+                <p>Completa un esercizio per ricevere un'analisi AI.</p>
+            </div>
+            <button id="get-ai-feedback-button" style="display: none; margin-top: 10px;">Analizza con AI</button>
+        </div>
+    </div>
+
+    <div class="control-buttons">
+        <button id="start-button" disabled>Start</button>
+        <button id="pause-button" disabled>Pause</button>
+        <button id="stop-button" disabled>Stop</button>
+        <button id="theory-button">Teoria</button>
+    </div>
+
+    <div id="score">
+        <p>Caricamento...</p>
+    </div>
+
+    <!-- Script Esercizi (IMPORTANTE: prima di main.js) -->
+    <!-- Basato sulla foto dei file nella cartella /exercises -->
+    <script src="js/exercises/accompagnamenti.js"></script>
+    <script src="js/exercises/accordi_complessi.js"></script>
+    <script src="js/exercises/accordi_rivolti.js"></script>
+    <script src="js/exercises/contrappunto_base.js"></script>
+    <script src="js/exercises/giri_armonici.js"></script>
+    <script src="js/exercises/indipendenza_mani.js"></script>
+    <script src="js/exercises/melodie_celebri.js"></script>
+    <script src="js/exercises/scale_animate.js"></script>
+    
+    <script>
+        // Definisci le categorie basandoti sui nomi dei file e degli array di esercizi.
+        // Assicurati che il nome della chiave (es. "Accompagnamenti") corrisponda
+        // esattamente al valore del campo 'category' negli oggetti esercizio dei rispettivi file.
+        window.exerciseData = {
+            "Accompagnamenti": typeof accompagnamentiExercises !== 'undefined' ? accompagnamentiExercises : [],
+            "Accordi Complessi": typeof accordiComplessiExercises !== 'undefined' ? accordiComplessiExercises : [],
+            "Accordi Rivolti": typeof accordiRivoltiExercises !== 'undefined' ? accordiRivoltiExercises : [],
+            "Contrappunto Base": typeof contrappuntoBaseExercises !== 'undefined' ? contrappuntoBaseExercises : [],
+            "Giri Armonici": typeof giriArmoniciExercises !== 'undefined' ? giriArmoniciExercises : [],
+            "Indipendenza Mani": typeof indipendenzaManiExercises !== 'undefined' ? indipendenzaManiExercises : [],
+            "Melodie Celebri": typeof melodieCelebriExercises !== 'undefined' ? melodieCelebriExercises : [],
+            "Scale Animate": typeof scaleAnimateExercises !== 'undefined' ? scaleAnimateExercises : []
+        };
+    </script>
+
+    <!-- I tuoi script principali -->
+    <script type="module" src="js/main.js"></script>
+
+</body>
+</html>
