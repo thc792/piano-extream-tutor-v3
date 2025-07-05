@@ -359,9 +359,17 @@ function handleNoteOn(noteName, midiNote, velocity) {
     if (playedNoteSpan) playedNoteSpan.textContent = `${noteName} (MIDI: ${midiNote}, Vel: ${velocity})`;
 
     const absoluteTimestamp = performance.now();
-    let eventType = 'extra_note'; 
+    let eventType = 'extra_note';
     let matchedExpectedNoteInfo = null;
     let noteMatchedAnExpectedDirectly = false;
+
+    // --- NUOVO: Determina il BPM corrente per i calcoli ---
+    let currentBpm = null;
+    if (isMetronomeRunning) {
+        currentBpm = metronomeBpm;
+    } else if (currentExerciseDefinition && currentExerciseDefinition.bpm) {
+        currentBpm = currentExerciseDefinition.bpm;
+    }
 
     const noteCollections = [currentExerciseData.notesTreble, currentExerciseData.notesBass, currentExerciseData.notes];
 
@@ -369,15 +377,29 @@ function handleNoteOn(noteName, midiNote, velocity) {
         if (notes && Array.isArray(notes)) {
             for (const noteObj of notes) {
                 if (noteObj && noteObj.status === 'expected') {
-                    if (noteObj.expectedMidiValues.includes(midiNote) && !noteObj.isCorrect) { 
+                    if (noteObj.expectedMidiValues.includes(midiNote) && !noteObj.isCorrect) {
                         noteMatchedAnExpectedDirectly = true;
                         eventType = 'correct_match';
+                        
+                        // --- NUOVO: Calcolo del Timestamp Teorico ---
+                        let theoreticalTimestampMs = null;
+                        if (currentBpm && typeof noteObj.startTick === 'number') {
+                            // In 4/4, un beat (semiminima) è 1024 ticks (4096 / 4).
+                            // Questo valore può essere reso più robusto se si analizza il timeSignature, ma per ora 1024 è un'ottima assunzione.
+                            const ticksPerBeat = 1024;
+                            const msPerBeat = 60000 / currentBpm;
+                            // Calcoliamo a quale beat si trova il tick e moltiplichiamo per ms/beat
+                            theoreticalTimestampMs = Math.round((noteObj.startTick / ticksPerBeat) * msPerBeat);
+                        }
+                        // --- FINE NUOVO ---
+
                         matchedExpectedNoteInfo = {
                             uniqueId: noteObj.uniqueId,
                             keys: noteObj.keys,
                             expectedMidiValues: [...noteObj.expectedMidiValues],
                             startTick: noteObj.startTick,
                             durationString: noteObj.duration,
+                            theoreticalTimestampMs: theoreticalTimestampMs // <-- AGGIUNTO IL DATO CHIAVE
                         };
 
                         if (!noteObj.correctMidiValues.includes(midiNote)) {
@@ -392,12 +414,12 @@ function handleNoteOn(noteName, midiNote, velocity) {
                         } else {
                             updateInfo(getNoteDescriptionForUser(noteObj));
                         }
-                        break; 
+                        break;
                     }
                 }
             }
         }
-        if (noteMatchedAnExpectedDirectly) break; 
+        if (noteMatchedAnExpectedDirectly) break;
     }
 
     if (!noteMatchedAnExpectedDirectly) {
@@ -411,12 +433,13 @@ function handleNoteOn(noteName, midiNote, velocity) {
 
         if (activeExpectedNote) {
             eventType = 'incorrect_match';
-            matchedExpectedNoteInfo = { 
+            matchedExpectedNoteInfo = {
                 uniqueId: activeExpectedNote.uniqueId,
                 keys: activeExpectedNote.keys,
                 expectedMidiValues: [...activeExpectedNote.expectedMidiValues],
                 startTick: activeExpectedNote.startTick,
                 durationString: activeExpectedNote.duration,
+                theoreticalTimestampMs: null // Non possiamo calcolarlo per un errore, ma manteniamo la struttura
             };
             if (currentRepetitionData && currentRepetitionData.errors) {
                 currentRepetitionData.errors.push({
@@ -443,14 +466,11 @@ function handleNoteOn(noteName, midiNote, velocity) {
             eventData.expectedNoteInfo = matchedExpectedNoteInfo;
         }
 
-        if (isMetronomeRunning) {
-            eventData.bpmAtEvent = metronomeBpm;
-        } else if (currentExerciseDefinition && currentExerciseDefinition.bpm) {
-            eventData.bpmAtEvent = currentExerciseDefinition.bpm;
+        if (currentBpm) { // Usa la variabile definita all'inizio
+            eventData.bpmAtEvent = currentBpm;
         }
 
         currentRepetitionData.playedNoteEvents.push(eventData);
-        // console.log("PlayedNoteEvent:", JSON.stringify(eventData, null, 2)); 
     }
 
     updateSuccessRate();
